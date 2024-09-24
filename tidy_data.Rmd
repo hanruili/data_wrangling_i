@@ -5,17 +5,19 @@ date: "2024-09-24"
 output: github_document
 ---
 
-```{r}
+```{r message=FALSE}
 library(tidyverse)
 library(readxl)
 library(haven)
+```
 
+# `pivot_longer`
+
+```{r}
 pulse_df = 
   read_sas("data/public_pulse_data.sas7bdat") |>
   janitor::clean_names()
-```
 
-```{r}
 pulse_tidy_df = 
   pulse_df |>
   pivot_longer(
@@ -31,7 +33,6 @@ pulse_tidy_df =
 
 pulse_tidy_df
 ```
-
 
 ## Example:
 
@@ -55,8 +56,33 @@ litters_tidy_df =
       "gd0_weight" ~ 0,
       "gd18_weight" ~ 18
     ))
+
+litters_tidy_df
 ```
 
 
+# `pivot_wider`
+
+Make up an analysis result table.
+
+```{r}
+analysis_df = 
+  tibble(
+    group = c("treatment", "treatment", "control", "control"),
+    time = c("pre", "post", "pre", "post"),
+    mean = c(4, 10, 4.2, 5)
+  )
+```
+
+`pivot_wider` for human readability.
+
+```{r}
+analysis_df |>
+  pivot_wider(
+    names_from = time,
+    values_from = mean
+  ) |>
+  knitr::kable() # For reading
+```
 
 

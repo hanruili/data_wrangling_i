@@ -5,29 +5,17 @@ Hanrui Li
 
 ``` r
 library(tidyverse)
-```
-
-    ## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-    ## ✔ dplyr     1.1.4     ✔ readr     2.1.5
-    ## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-    ## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-    ## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
-    ## ✔ purrr     1.0.2     
-    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ dplyr::filter() masks stats::filter()
-    ## ✖ dplyr::lag()    masks stats::lag()
-    ## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
-
-``` r
 library(readxl)
 library(haven)
+```
 
+# `pivot_longer`
+
+``` r
 pulse_df = 
   read_sas("data/public_pulse_data.sas7bdat") |>
   janitor::clean_names()
-```
 
-``` r
 pulse_tidy_df = 
   pulse_df |>
   pivot_longer(
@@ -90,4 +78,51 @@ litters_tidy_df =
       "gd0_weight" ~ 0,
       "gd18_weight" ~ 18
     ))
+
+litters_tidy_df
 ```
+
+    ## # A tibble: 98 × 8
+    ##    group litter_number gd_of_birth pups_born_alive pups_dead_birth pups_survive
+    ##    <chr> <chr>               <dbl>           <dbl>           <dbl>        <dbl>
+    ##  1 Con7  #85                    20               3               4            3
+    ##  2 Con7  #85                    20               3               4            3
+    ##  3 Con7  #1/2/95/2              19               8               0            7
+    ##  4 Con7  #1/2/95/2              19               8               0            7
+    ##  5 Con7  #5/5/3/83/3-3          19               6               0            5
+    ##  6 Con7  #5/5/3/83/3-3          19               6               0            5
+    ##  7 Con7  #5/4/2/95/2            19               5               1            4
+    ##  8 Con7  #5/4/2/95/2            19               5               1            4
+    ##  9 Con7  #4/2/95/3-3            20               6               0            6
+    ## 10 Con7  #4/2/95/3-3            20               6               0            6
+    ## # ℹ 88 more rows
+    ## # ℹ 2 more variables: gd_time <dbl>, weight <dbl>
+
+# `pivot_wider`
+
+Make up an analysis result table.
+
+``` r
+analysis_df = 
+  tibble(
+    group = c("treatment", "treatment", "control", "control"),
+    time = c("pre", "post", "pre", "post"),
+    mean = c(4, 10, 4.2, 5)
+  )
+```
+
+`pivot_wider` for human readability.
+
+``` r
+analysis_df |>
+  pivot_wider(
+    names_from = time,
+    values_from = mean
+  ) |>
+  knitr::kable() # For reading
+```
+
+| group     | pre | post |
+|:----------|----:|-----:|
+| treatment | 4.0 |   10 |
+| control   | 4.2 |    5 |
