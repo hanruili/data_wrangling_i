@@ -34,9 +34,9 @@ pulse_tidy_df =
 pulse_tidy_df
 ```
 
-## Example:
+**Example:**
 
-```{r}
+```{r message=FALSE}
 litters_df = 
   read_csv("data/FAS_litters.csv", na = c("NA", "", ".")) |>
   janitor::clean_names()
@@ -115,9 +115,50 @@ lotr_df =
 lotr_df
 ```
 
+# Join FAS datasets
 
+Import `litters` dataset
 
+```{r message=FALSE}
+litters_df = 
+  read_csv("data/FAS_litters.csv", na = c("NA", "", ".")) |>
+  janitor::clean_names() |>
+  mutate(
+    wt_gain = gd18_weight - gd0_weight
+  ) |>
+  separate(
+    group, into = c("dose", "day_of_treatment"), sep = 3
+  )
 
+litters_df
+```
+
+Import `pups` next
+
+```{r message=FALSE}
+pups_df = 
+  read_csv("data/FAS_pups.csv", na = c("NA", "", ".")) |>
+  janitor::clean_names() |>
+  mutate(
+    sex = case_match(
+      sex,
+      1 ~ "male",
+      2 ~ "female"
+    )
+  )
+
+pups_df
+```
+
+Join the datasets!
+
+```{r}
+fas_df = 
+  left_join(pups_df, litters_df, by = "litter_number") |>
+  relocate(litter_number, dose, day_of_treatment)
+
+fas_df
+```
 
 
 

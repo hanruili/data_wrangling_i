@@ -47,22 +47,13 @@ pulse_tidy_df
     ## 10 10022 01m    58.5 male          3
     ## # ℹ 4,338 more rows
 
-## Example:
+**Example:**
 
 ``` r
 litters_df = 
   read_csv("data/FAS_litters.csv", na = c("NA", "", ".")) |>
   janitor::clean_names()
 ```
-
-    ## Rows: 49 Columns: 8
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## Delimiter: ","
-    ## chr (2): Group, Litter Number
-    ## dbl (6): GD0 weight, GD18 weight, GD of Birth, Pups born alive, Pups dead @ ...
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ``` r
 litters_tidy_df = 
@@ -177,3 +168,98 @@ lotr_df
     ## 16 return_king     hobbit male    2673
     ## 17 return_king     man    female   268
     ## 18 return_king     man    male    2459
+
+# Join FAS datasets
+
+Import `litters` dataset
+
+``` r
+litters_df = 
+  read_csv("data/FAS_litters.csv", na = c("NA", "", ".")) |>
+  janitor::clean_names() |>
+  mutate(
+    wt_gain = gd18_weight - gd0_weight
+  ) |>
+  separate(
+    group, into = c("dose", "day_of_treatment"), sep = 3
+  )
+
+litters_df
+```
+
+    ## # A tibble: 49 × 10
+    ##    dose  day_of_treatment litter_number   gd0_weight gd18_weight gd_of_birth
+    ##    <chr> <chr>            <chr>                <dbl>       <dbl>       <dbl>
+    ##  1 Con   7                #85                   19.7        34.7          20
+    ##  2 Con   7                #1/2/95/2             27          42            19
+    ##  3 Con   7                #5/5/3/83/3-3         26          41.4          19
+    ##  4 Con   7                #5/4/2/95/2           28.5        44.1          19
+    ##  5 Con   7                #4/2/95/3-3           NA          NA            20
+    ##  6 Con   7                #2/2/95/3-2           NA          NA            20
+    ##  7 Con   7                #1/5/3/83/3-3/2       NA          NA            20
+    ##  8 Con   8                #3/83/3-3             NA          NA            20
+    ##  9 Con   8                #2/95/3               NA          NA            20
+    ## 10 Con   8                #3/5/2/2/95           28.5        NA            20
+    ## # ℹ 39 more rows
+    ## # ℹ 4 more variables: pups_born_alive <dbl>, pups_dead_birth <dbl>,
+    ## #   pups_survive <dbl>, wt_gain <dbl>
+
+Import `pups` next
+
+``` r
+pups_df = 
+  read_csv("data/FAS_pups.csv", na = c("NA", "", ".")) |>
+  janitor::clean_names() |>
+  mutate(
+    sex = case_match(
+      sex,
+      1 ~ "male",
+      2 ~ "female"
+    )
+  )
+
+pups_df
+```
+
+    ## # A tibble: 313 × 6
+    ##    litter_number sex   pd_ears pd_eyes pd_pivot pd_walk
+    ##    <chr>         <chr>   <dbl>   <dbl>    <dbl>   <dbl>
+    ##  1 #85           male        4      13        7      11
+    ##  2 #85           male        4      13        7      12
+    ##  3 #1/2/95/2     male        5      13        7       9
+    ##  4 #1/2/95/2     male        5      13        8      10
+    ##  5 #5/5/3/83/3-3 male        5      13        8      10
+    ##  6 #5/5/3/83/3-3 male        5      14        6       9
+    ##  7 #5/4/2/95/2   male       NA      14        5       9
+    ##  8 #4/2/95/3-3   male        4      13        6       8
+    ##  9 #4/2/95/3-3   male        4      13        7       9
+    ## 10 #2/2/95/3-2   male        4      NA        8      10
+    ## # ℹ 303 more rows
+
+Join the datasets!
+
+``` r
+fas_df = 
+  left_join(pups_df, litters_df, by = "litter_number") |>
+  relocate(litter_number, dose, day_of_treatment)
+
+fas_df
+```
+
+    ## # A tibble: 313 × 15
+    ##    litter_number dose  day_of_treatment sex   pd_ears pd_eyes pd_pivot pd_walk
+    ##    <chr>         <chr> <chr>            <chr>   <dbl>   <dbl>    <dbl>   <dbl>
+    ##  1 #85           Con   7                male        4      13        7      11
+    ##  2 #85           Con   7                male        4      13        7      12
+    ##  3 #1/2/95/2     Con   7                male        5      13        7       9
+    ##  4 #1/2/95/2     Con   7                male        5      13        8      10
+    ##  5 #5/5/3/83/3-3 Con   7                male        5      13        8      10
+    ##  6 #5/5/3/83/3-3 Con   7                male        5      14        6       9
+    ##  7 #5/4/2/95/2   Con   7                male       NA      14        5       9
+    ##  8 #4/2/95/3-3   Con   7                male        4      13        6       8
+    ##  9 #4/2/95/3-3   Con   7                male        4      13        7       9
+    ## 10 #2/2/95/3-2   Con   7                male        4      NA        8      10
+    ## # ℹ 303 more rows
+    ## # ℹ 7 more variables: gd0_weight <dbl>, gd18_weight <dbl>, gd_of_birth <dbl>,
+    ## #   pups_born_alive <dbl>, pups_dead_birth <dbl>, pups_survive <dbl>,
+    ## #   wt_gain <dbl>
